@@ -1,11 +1,16 @@
 # Midifile
 
+[Note: This README is currently a slightly mutated copy of
+https://github.com/jimm/midilib/blob/master/README.rdoc, so don't pay too
+much attention to it yet.]
+
 Midifile is a library useful for reading and writing standard type 1 MIDI
 files and manipulating MIDI event data.
 
 The GitHub project page and Web site of Midifile is
 http://github.com/jimm/elixir-midifile and the Hex page is
 https://hex.pm/packages/midifile.
+
 
 ## Installation
 
