@@ -13,8 +13,19 @@ defmodule Midifile.Track do
 
   # Merges a list of `events` into `track`'s event list in the proper time
   # order and returns a new track with the combined events.
-  def merge(_track, _events) do
-    # TODO
+  def merge(track, events) do
+    merged = [Enum.zip(track.events, event_start_times(track.events)),
+              Enum.zip(events, event_start_times(events))]
+    |> Enum.concat
+    |> Enum.sort(fn({_, start1}, {_, start2}) -> start1 < start2 end)
+
+    {_, es} = merged
+    |> Enum.reduce({0, []}, fn({e, start}, {prev_start_time, events}) ->
+      delta = start - prev_start_time
+      {start, [%{e | delta_time: delta} | events]}
+    end)
+
+    %{track | events: Enum.reverse(es)}
   end
 
   # Return a track where every event in `track` has been quantized.
@@ -41,8 +52,12 @@ defmodule Midifile.Track do
   end
 
   def start_times(track) do
-    {_, start_times} = track.events |>
-    Enum.reduce({0, []}, fn(e, {prev_delta, sts}) ->
+    event_start_times(track.events)
+  end
+
+  defp event_start_times(events) do
+    {_, start_times} = events
+    |> Enum.reduce({0, []}, fn(e, {prev_delta, sts}) ->
       {prev_delta + e.delta_time, [prev_delta + e.delta_time | sts]}
     end)
     Enum.reverse(start_times)
