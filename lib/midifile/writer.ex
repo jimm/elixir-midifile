@@ -1,6 +1,9 @@
 defmodule Midifile.Writer do
 
   use Bitwise
+  alias Midifile.Sequence
+  alias Midifile.Track
+  alias Midifile.Event
   alias Midifile.Varlen
 
   # Channel messages

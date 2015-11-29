@@ -1,5 +1,3 @@
-Code.require_file "test_helper.exs", __DIR__
-
 defmodule VarlenTest do
   use ExUnit.Case
 
@@ -21,18 +19,20 @@ defmodule VarlenTest do
     ]
 
   test "num to var len" do
-    Enum.map(@data, fn({num, answer, answer_bytes}) ->
-                        answer_bits = answer_bytes * 8
-                        assert(<<answer :: size(answer_bits)>> == Varlen.write(num))
-                    end)
+    @data
+    |> Enum.map(fn({num, answer, answer_bytes}) ->
+      answer_bits = answer_bytes * 8
+      assert(<<answer :: size(answer_bits)>> == Varlen.write(num))
+    end)
   end
 
   test "var len to num" do
-    Enum.map(@data, fn({answer, num, num_bytes}) ->
-                        num_bits = num_bytes * 8
-                        remainder_bits = 32 - num_bits
-                        retval = Varlen.read(<<num :: size(num_bits), 0 :: size(remainder_bits)>>)
-                        assert(retval == [answer, num_bytes])
-                    end)
+    @data
+    |> Enum.map(fn({answer, num, num_bytes}) ->
+      num_bits = num_bytes * 8
+      remainder_bits = 32 - num_bits
+      retval = Varlen.read(<<num :: size(num_bits), 0 :: size(remainder_bits)>>)
+      assert(retval == [answer, num_bytes])
+    end)
   end
 end

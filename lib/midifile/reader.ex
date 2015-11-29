@@ -1,6 +1,9 @@
 defmodule Midifile.Reader do
 
   use Bitwise
+  alias Midifile.Sequence
+  alias Midifile.Track
+  alias Midifile.Event
   alias Midifile.Varlen
 
   @moduledoc """

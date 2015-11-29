@@ -1,7 +1,7 @@
-Code.require_file "test_helper.exs", __DIR__
-
 defmodule IoTest do
   use ExUnit.Case
+  alias Midifile.Sequence
+  alias Midifile.Track
 
   @seq_test_file :filename.join(__DIR__, "test.mid")
   @output_file "/tmp/testout.mid"
@@ -10,6 +10,7 @@ defmodule IoTest do
     assert(t0.name == t1.name)
     assert(length(t0.events) == length(t1.events))
     assert(t0.events == t1.events)
+    assert(Track.instrument(t0) == Track.instrument(t1))
   end
 
   def compare_sequences(s0, s1) do
