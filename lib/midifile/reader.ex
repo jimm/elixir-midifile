@@ -67,11 +67,12 @@ defmodule Midifile.Reader do
   def read(path) do
     {:ok, f} = File.open(path, [:read, :binary])
     pos = look_for_chunk(f, 0, "MThd", :file.pread(f, 0, 4))
-    [header, num_tracks] = parse_header(:file.pread(f, pos, 10))
+    [{:header, format, division}, num_tracks] = parse_header(:file.pread(f, pos, 10))
     tracks = read_tracks(f, num_tracks, pos + 10, [])
     File.close(f)
     [conductor_track | remaining_tracks] = tracks
-    %Sequence{header: header, conductor_track: conductor_track, tracks: remaining_tracks}
+    %Sequence{format: format, division: division,
+              conductor_track: conductor_track, tracks: remaining_tracks}
   end
 
   defp debug(msg) do

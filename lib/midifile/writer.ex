@@ -58,13 +58,13 @@ defmodule Midifile.Writer do
   MIDI file writer.
   """
 
-  def write(%Sequence{header: header, conductor_track: ct, tracks: tracks}, path) do
-    l = [header_io_list(header, length(tracks) + 1) |
+  def write(%Sequence{format: format, division: division, conductor_track: ct, tracks: tracks}, path) do
+    l = [header_io_list(format, division, length(tracks) + 1) |
   	     Enum.map([ct | tracks], &track_io_list/1)]
     :ok = :file.write_file(path, IO.iodata_to_binary(l))
   end
 
-  def header_io_list({:header, _, division}, num_tracks) do
+  def header_io_list(_format, division, num_tracks) do
     [?M, ?T, ?h, ?d,
      0, 0, 0, 6,                  # header chunk size
      0, 1,                        # format,

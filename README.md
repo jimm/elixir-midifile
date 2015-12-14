@@ -30,76 +30,71 @@ sequence is made up of multiple tracks. It doesn't yet understand format 0
 (a single track containing all events) or format 2 (a collection of format 0
 files in one file).
 
-### MIDI::Sequence
+### Midifile.Sequence
 
-A sequence contains a collection of tracks and global information like the
-sequence's pulses per quarter note (ppqn) and time signature.
+A sequence contains a list of tracks and global information like the
+sequence's format (always 1 for Midifile) and time division.
 
-The first track in a sequence is special; it holds meta-events like tempo and
-sequence name. Don't put any notes in this track.
+The first track in a sequence is special; it holds meta-events like tempo
+and sequence name. It is stored as a sequence's `conductor_track`. Don't put
+any notes in this track.
 
-MIDI::Sequence also contains some convenience methods that let you set and
-retrieve the sequence's name, the time signature, and to retrieve the first
-tempo event's beats-per-minute value.
+`Midifile.Sequence` also contains some convenience methods that let you [set
+and] retrieve the sequence's name, [the time signature, and to retrieve the
+first tempo event's beats-per-minute value].
 
-Normally instances of MIDI::IO::SeqReader and MIDI::IO::SeqWriter are used
-when a sequence reads itself from or writes itself to a MIDI file. You can
-change that by setting a sequence's reader_class or writer_class attributes.
-Instances of the classes contained in those attributes are created and used
-whenever the sequence reads or writes itself.
-
-### MIDI::Track
+### Midifile.Track
 
 A track contains an array of events.
 
-When you modify the +events+ array, make sure to call recalc_times so each
-event gets its +time_from_start+ recalculated. You don't have to do that
-after every event you add; just remember to do so before using the track in a
-way that expects the list of events to be ordered correctly.
+When you modify the `events` array, make sure to call recalc_times so each
+event gets its `time_from_start` recalculated. You don't have to do that
+after every event you add; just remember to do so before using the track in
+a way that expects the list of events to be ordered correctly.
 
 A Track also holds a bit mask that specifies the channels used by the track.
 This bit mask is set when the track is read from the MIDI file by a SeqReader
 but is _not_ kept up to date by any other methods. Specifically, if you add
 events to a track at any other time, the bit mask will not be updated.
 
-### MIDI::Measure
+### Midifile.Measure
 
 This class contains information about a measure from the sequence. Measure
 data is based on the time signature information from the sequence and is not
 stored in the sequence itself.
 
-### MIDI::Measures
+### Midifile.Measures
 
-The class MIDI::Sequence method get_measures returns a MIDI::Measures object.
-MIDI::Measures is a subclass of Array. It is a specialized container for
-MIDI::Measure objects, which can be use to map event times to measure numbers.
+The class Midifile.Sequence method get_measures returns a Midifile.Measures object.
+Midifile.Measures is a subclass of Array. It is a specialized container for
+Midifile.Measure objects, which can be use to map event times to measure numbers.
 Please note that this object has to be remade when events are deleted/added in
 the sequence.
 
-MIDI::Measure and MIDI::Measures are brought to us by Jari Williamsson
+Midifile.Measure and Midifile.Measures are brought to us by Jari Williamsson
 <jari.williamsson@mailbox.swipnet.se>, who also contributed some improvements
-to the MIDI::Event and MIDI::Track classes.
+to the Midifile.Event and Midifile.Track classes.
 
-### MIDI::Event
+### Midifile.Event
 
 Each event holds not only its delta time but also its time from the start of
 the track. The track is responsible for recalculating its events' start times.
-You can call MIDI::Track#recalc_times to do so.
+You can call Midifile.Track#recalc_times to do so.
 
-Subclasses of MIDI::Event implement the various MIDI messages such as note on
+Subclasses of Midifile.Event implement the various MIDI messages such as note on
 and off, controller values, system exclusive data, and realtime bytes.
 
-MIDI::Realtime events have delta values and start times, just like all the
+Midifile.Realtime events have delta values and start times, just like all the
 other Midifile event types do. (MIDI real time status bytes don't have delta
 times, but this way we can record when in a track the realtime byte was
 received and should be sent. This is useful for start/continue/stop events
-that control other devices, for example.) Note that when a MIDI::Realtime
+that control other devices, for example.) Note that when a Midifile.Realtime
 event is written out to a MIDI file, the delta time is not written.
 
-MIDI::MetaEvent events hold an array of bytes named 'data'. Many meta events
+Midifile.MetaEvent events hold an array of bytes named 'data'. Many meta events
 are string holders (text, lyric, marker, etc.) Though the 'data' value is
-always an array of bytes, MIDI::MetaEvent helps with saving and accessing
-string. The MIDI::MetaEvent#data_as_str method returns the data bytes as a
+always an array of bytes, Midifile.MetaEvent helps with saving and accessing
+string. The Midifile.MetaEvent#data_as_str method returns the data bytes as a
 string. When assigning to a meta event's data, if you pass in a string it will
 get converted to an array of bytes.
 
@@ -113,7 +108,7 @@ examples directory, which are described below.
 
 ### Reading a MIDI File
 
-To read a MIDI file, create a MIDI::Sequence object and call its #read method,
+To read a MIDI file, create a Midifile.Sequence object and call its #read method,
 passing in an IO object.
 
 The #read method takes an optional block. If present, the block is called
@@ -125,7 +120,7 @@ for example by updating a GUI progress bar.
  require 'Midifile/io/seqreader'
 
  # Create a new, empty sequence.
- seq = MIDI::Sequence.new()
+ seq = Midifile.Sequence.new()
 
  # Read the contents of a MIDI file into the sequence.
  File.open('my_midi_file.mid', 'rb') { | file |
@@ -166,7 +161,7 @@ pressure) on channel 5 down one octave.
  require 'Midifile/io/seqwriter'
 
  # Create a new, empty sequence.
- seq = MIDI::Sequence.new()
+ seq = Midifile.Sequence.new()
 
  # Read the contents of a MIDI file into the sequence.
  File.open('my_input_file.mid', 'rb') { | file |
@@ -182,7 +177,7 @@ pressure) on channel 5 down one octave.
          # If the event is a note event (note on, note off, or poly
          # pressure) and it is on MIDI channel 5 (channels start at
          # 0, so we use 4), then transpose the event down one octave.
-         if MIDI::NoteEvent === event && event.channel == 4
+         if Midifile.NoteEvent === event && event.channel == 4
              event.note -= 12
          end
      }
@@ -195,7 +190,7 @@ pressure) on channel 5 down one octave.
 ### Manipulating tracks
 
 If you modify a track's list of events directly, don't forget to call
-MIDI::Track#recalc_times when you are done.
+Midifile.Track#recalc_times when you are done.
 
  track.events[42, 1] = array_of_events
  track.events << an_event
@@ -204,21 +199,21 @@ MIDI::Track#recalc_times when you are done.
 
 ### Calculating delta times
 
-A few methods in MIDI::Sequence make it easier to calculate the delta times
-that represent note lengths. MIDI::Sequence#length_to_delta takes a note
+A few methods in Midifile.Sequence make it easier to calculate the delta times
+that represent note lengths. Midifile.Sequence#length_to_delta takes a note
 length (a multiple of a quarter note) and returns the delta time given the
 sequence's current ppqn (pulses per quarter note) setting. 1 is a quarter
 note, 1.0/32.0 is a 32nd note (use floating-point numbers to avoid integer
 rounding), 1.5 is a dotted quarter, etc. See the documentation for that method
 for more information.
 
-MIDI::Sequence#note_to_length takes a note name and returns a length value
+Midifile.Sequence#note_to_length takes a note name and returns a length value
 (again, as a multiple of a quarter note). Legal note names are those found in
-MIDI::Sequence::NOTE_TO_LENGTH, and may begin with "dotted" and/or end with
+Midifile.Sequence::NOTE_TO_LENGTH, and may begin with "dotted" and/or end with
 "triplet". For example, "whole", "sixteenth", "32nd", "quarter triplet",
 "dotted 16th", and "dotted 8th triplet" are all legal note names.
 
-Finally, MIDI::Sequence#note_to_delta takes a note name and returns a delta
+Finally, Midifile.Sequence#note_to_delta takes a note name and returns a delta
 time. It does this by calling note_to_length, then passing the result to
 length_to_delta.
 
@@ -235,7 +230,7 @@ directory.
   uses the to_s method of each event.
 
 * examples/reader2text.rb dumps a MIDI file as text. It subclasses
-  MIDI::SeqReader instead of creating a sequence containing tracks and events.
+  Midifile.SeqReader instead of creating a sequence containing tracks and events.
 
 * examples/transpose.rb transposes all note events (note on, note off, poly
   pressure) on a specified channel by a specified amount.
@@ -248,17 +243,6 @@ directory.
 
 ## Resources
 
-The Ruby Web site (http://www.ruby-lang.org/en/index.html) contains an
-introduction to Ruby, the Ruby Application Archive (RAA) at
-http://raa.ruby-lang.org, and pointers to more information.
-
-
-<cite>Programming Ruby, The Pragmatic Programmer's Guide</cite>, by David
-Thomas and Andrew Hunt, is a well-written and practical introduction to Ruby.
-Its Web page at http://www.rubycentral.com/book also contains a wealth of Ruby
-information. Though the first edition book is available online, I encourage
-you to purchase a copy of the latest edition.
-
 A description of the MIDI file format can be found in a few places such as
 https://www.csie.ntu.edu.tw/~r92092/ref/midi/.
 
@@ -267,8 +251,6 @@ describes the format of MIDI commands.
 
 
 # To Do
-
-:include: TODO.rdoc
 
 
 # Support
@@ -284,168 +266,22 @@ describes the format of MIDI commands.
 # Administrivia
 
 Author:: Jim Menard (mailto:jim@jimmenard.com)
-Copyright:: Copyright (c) 2003-2013 Jim Menard
-License:: Distributed under the same license as Ruby.
+Copyright:: Copyright (c) 2015 Jim Menard
+License:: Distributed under the same license as Elixir: Apache v2.0.
 
 
 ## Copying
 
 Midifile is copyrighted free software by Jim Menard and is released under the
-same license as Ruby. See the Ruby license at
-http://www.ruby-lang.org/en/LICENSE.txt.
+same license as Elixir: Apache v2.0.
 
 Midifile may be freely copied in its entirety providing this notice, all
 source code, all documentation, and all other files are included.
 
-Midifile is Copyright (c) 2003-2013 by Jim Menard.
-
-The song "No Fences" contained in the MIDI file examples/NoFences.mid is
-Copyright (c) 1992 by Jim Menard (jim@jimmenard.com). It may be freely used
-for non-commercial purposes as long as the author is given credit.
+Midifile is Copyright (c) 2015 by Jim Menard.
 
 
 ## Recent Changes
-
-### Changes for 2.0.5:
-
-Updated +install.rb+ to work with newer versions of Ruby by using
-+fileutils+ instead of +ftools+.
-
-### Changes for 2.0.3:
-
-New MIDI::Sequence.pulses_to_seconds method.
-
-### Changes for 2.0.2:
-
-Stop monkeypatching Array in MIDI::Track.
-
-### Changes for 2.0.0:
-
-MIDI::NoteOnEvent and MIDI::NoteOffEvent renamed to MIDI::NoteOn and
-MIDI::NoteOff. The old names will still work for a while.
-
-The MIDI::Event boolean methods like meta? and note? have been removed. Use
-the event classes themselves (for example, MIDI::MetaEvent === my_event or
-my_event.kind_of?(MIDI::MetaEvent)). Case statements that use classes work,
-too:
-
-  case my_event
-  when MIDI::NoteEvent # superclass of note on, note off, poly press
-    do_this()
-  when MIDI::Controller
-    do_that()
-  end
-
-Introduced Adam Murray's stable sorting code for
-MIDI::Track#recalc_delta_from_times. See
-http://wiki.github.com/adamjmurray/cosy/Midifile-notes and
-http://github.com/adamjmurray/cosy/blob/master/lib/cosy/helper/midi_file_renderer_helper.rb
-for details.
-
-Aliased MIDI::Track#sort to MIDI::Track#recalc_delta_from_times, since all
-sort did was sort the events then call recalc_delta_from_times, and
-recalc_delta_from_times sorts the events before doing anything else.
-
-MIDI::Tempo#mpq_to_bpm now returns a float.
-
-### Changes for 1.2.0:
-
-Use byte arrays instead of strings for passing around data. All tests now pass
-for both Ruby 1.8.X and 1.9.X.
-
-### New code repository
-
-The Midifile code is now hosted at Github (http://github.com/jimm/Midifile).
-
-### Changes for 1.1.4:
-
-* Fixed a bug in KeySig.data_as_bytes. Thanks to Noah Thorp for finding this
-  and the bug fixed in 1.1.3.
-
-### Changes for 1.1.3:
-
-* Fixed the way Midifile detects the behavior of IO.getc.
-
-### Changes for 1.1.2:
-
-* Define MIDI::IO::Midifile.getc differently for different Ruby versions,
-  instead of checking for String.bytes every time we read a byte.
-
-### Changes for 1.1.1:
-
-* Make MIDI::IO::Midifile.getc do the right thing for both Ruby 1.8 and 1.9.
-
-### Changes for 1.1.0:
-
-* Added test/test.mid to list of files to be included when packaging Midifile
-  for distribution.
-
-### Changes for 1.0.0:
-
-* Fixed the bug in Track#recalc_delta_from_times found by Christopher Rose.
-
-### Changes for 0.8.7:
-
-* Fixed the misspelled POLY_PRESSURE constant, thanks to Mario Pehle.
-
-### Changes for 0.8.6:
-
-* Added missing test/test.mid.
-
-### Changes for 0.8.5:
-
-* Fixed bugs in MIDI::PitchBend reading and writing, thanks to Emanuel
-  Borsboom.
-
-* Fixed a bug in MIDI::Track#quantize.
-
-* The argument to MIDI::Track#quantize has changed: it is now either a note
-  name ("sixteenth", "32nd", "8th triplet") or a length (1 = quarter, 0.25 =
-  sixteenth). This is a drastic change that will break all previous calls to
-  quantize. However, since that method was broken already, I don't feel it's
-  a burden to anybody to change the arguments.
-
-### Changes for 0.8.4:
-
-* Realtime status bytes now set @is_realtime to true and return true when
-  realtime? is called.
-
-* All system common events now set @is_system to true and return true when
-  system? is called, not just system exclusive events.
-
-* Added examples/from_scratch.rb, which shows how to create a sequence
-  manually.
-
-* New MIDI::Sequence methods that turn note length names like "32nd", "dotted
-  quarter", and "16th triplet" into delta times. See the docs below and
-  MIDI::Sequence::length_to_delta, MIDI::Sequence::note_to_length, and
-  MIDI::Sequence::note_to_delta.
-
-
-### Changes for 0.8.3:
-
-* Added MIDI::NoteEvent.note_to_s, which returns note name as a string like
-  "C4" or "F#6".
-
-* Added new boolean attributes to MIDI::Event: @print_decimal_numbers and
-  @print_note_names. These are used by all Event to_s methods. See
-  examples/seq2text.rb for an example.
-
-### Changes for 0.8.2:
-
-* Changed MIDI::MetaEvent.type to MIDI::MetaEvent.event_type to avoid
-  runtime complaints about Object#type calls.
-* Added 'b' binary flag to file open modes for Windows.
-* Fixed $LOAD_PATH in example files.
-* Fixed read and write block arguments.
-* Fixed other example script bugs.
-
-### Changes for 0.8.1:
-
-* Fixed track sorting.
-* Fixed track's recalc_delta_from_times method.
-* Fixed event quantization.
-* More tests and documentation.
 
 
 ## Warranty
