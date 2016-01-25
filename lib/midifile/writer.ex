@@ -102,15 +102,18 @@ defmodule Midifile.Writer do
     chan = status &&& 0x0f
     running_status = Process.get(:status)
     running_chan = Process.get(:chan)
-    if running_chan == chan and (running_status == @status_nibble_off or
-  	                             (running_status == @status_nibble_on and vel == 64)) do
-  	    status = []             # do not output a status
-  	    outvel = 0
+    {status, outvel} = if running_chan == chan and
+                          (running_status == @status_nibble_off or
+  	                       (running_status == @status_nibble_on and vel == 64)) do
+      # If we see a note off and the velocity is 64, we can store a note on
+      # with a velocity of 0. If the velocity isn't 64 then storing a note
+      # on would be bad because the would be changed to 64 when reading the
+      # file back in.
+      {[], 0}                   # do not output a status
     else
-  	    status = (@status_nibble_off <<< 4) + chan
-  	    outvel = vel
-  	    Process.put(:status, @status_nibble_off)
-  	    Process.put(:chan, chan)
+  	  Process.put(:status, @status_nibble_off)
+  	  Process.put(:chan, chan)
+  	  {(@status_nibble_off <<< 4) + chan, vel}
     end
     [Varlen.write(delta_time), status, note, outvel]
   end
