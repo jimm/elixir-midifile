@@ -4,7 +4,7 @@ defmodule Midifile.Sequence do
 
   defstruct format: 1, division: 480,
     conductor_track: nil,
-    tracks: {}
+    tracks: []
 
   def name(%Midifile.Sequence{conductor_track: nil}), do: ""
   def name(%Midifile.Sequence{conductor_track: %Midifile.Track{events: {}}}),  do: ""

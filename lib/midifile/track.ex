@@ -6,7 +6,7 @@ defmodule Midifile.Track do
     events: []
 
   def instrument(%Midifile.Track{events: nil}), do: ""
-  def instrument(%Midifile.Track{events: {}}),  do: ""
+  def instrument(%Midifile.Track{events: []}),  do: ""
   def instrument(%Midifile.Track{events: list})  do
     Enum.find(list, %Event{}, &(&1.symbol == :instrument)).bytes
   end
