@@ -1,5 +1,5 @@
 defmodule EventTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
   alias Midifile.Event
 
   test "channel?" do
@@ -59,59 +59,85 @@ defmodule EventTest do
 
   test "to_string" do
     e = %Event{symbol: :on, bytes: [0x90, 64, 127]}
-    assert(Event.to_string(e) == "0: ch 0 on [64, 127]")
+    assert "0: ch 0 on [64, 127]" = Event.to_string(e)
   end
 
-  test "quantize 1" do
-    # Each value in this array is the expected quantized value of
-    # its index in the array.
-
-    # Test with quantize(4)
-    [0, 0, 4, 4, 4, 4, 8, 8, 8, 8, 12, 12, 12, 12, 16]
-    |> Enum.with_index
-    |> Enum.map(fn({afterq, before}) ->
-      e = %Event{delta_time: before}
-      e2 = Event.quantize(e, 0, 4)
-      assert(e2.delta_time == afterq)
-    end)
-
-    # Test with quantize(6)
-    [0, 0, 0, 6, 6, 6, 6, 6, 6, 12, 12, 12, 12, 12, 12, 18, 18, 18, 18, 18, 18, 24]
-    |> Enum.with_index
-    |> Enum.map(fn({afterq, before}) ->
-      e = %Event{delta_time: before}
-      e2 = Event.quantize(e, 0, 6)
-      assert(e2.delta_time == afterq)
-    end)
+  test "start times" do
+    events = [100, 100, 100] |> Enum.map(fn dt -> %Event{delta_time: dt} end)
+    assert [100, 200, 300] = Event.start_times(events)
   end
 
-  test "quantize 2" do
-    [{0, 0},
-     {1, 0},
-     {70, 80},
-     {100, 80},
-     {398, 400},
-     {405, 400},
-     {440, 480},
-     {441, 480}]
-    |> Enum.map(fn({orig, expected}) ->
-      e = %Event{delta_time: orig}
-      e2 = Event.quantize(e, 0, 80)
-      assert(e2.delta_time == expected)
+  test "delta times" do
+    start_times = [100, 200, 350]
+    assert [100, 100, 150] = Event.delta_times(start_times)
+  end
+
+  test "merge" do
+    e = %Event{symbol: :on, delta_time: 100, bytes: [0x92, 64, 127]}
+    es1 = [e, e, e]
+
+    es2 = (1..5)
+    |> Enum.map(fn(_) -> %Event{delta_time: 30, bytes: [0x80, 64, 127]} end)
+
+    events = Event.merge(es1, es2)
+    assert [30, 60, 90, 100, 120, 150, 200, 300] = Event.start_times(events)
+    statuses = events |> Enum.map(&(Event.status(&1)))
+    assert [0x80, 0x80, 0x80, 0x90, 0x80, 0x80, 0x90, 0x90] = statuses
+  end
+
+  test "quantize_to" do
+    [{80, 79, 80},
+     {80, 481, 480},
+     {4, 5, 4},
+     {4, 0, 0},
+     {4, 5, 4},
+     {4, 6, 8}]
+    |> Enum.map(fn {q, t, expected} ->
+      assert expected == Event.quantize_to(t, q)
     end)
   end
 
-  test "quantize when prev delta is not zero" do
-     # sum(prev events' delta), orig delta, expected delta
-    [{ 80,   0,   0},
-     { 78,   0,   2},
-     {  0, 100,  80},
-     {100, 100, 140},
-     {200, 100, 120}]
-    |> Enum.map(fn({prev_delta, orig, expected}) ->
-      e = %Event{delta_time: orig}
-      e2 = Event.quantize(e, prev_delta, 80)
-      assert(e2.delta_time == expected)
-    end)
+  test "quantize 4" do
+    # Each value in this array is the expected quantized start time of its
+    # index in the array.
+    expected = [0, 0, 4, 4, 4, 4, 8, 8, 8, 8, 12, 12, 12, 12, 16]
+
+    events = [%Event{delta_time: 0} | tl(expected)
+              |> Enum.map(fn _ -> %Event{delta_time: 1} end)]
+    # sanity checks
+    assert [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] = delta_times(events)
+    assert [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] = Event.start_times(events)
+
+    quantized = Event.quantize(events, 4)
+    assert expected == quantized |> Event.start_times
+  end
+
+  test "quantize 6" do
+    expected = [0, 0, 0, 6, 6, 6, 6, 6, 6, 12, 12, 12, 12, 12, 12, 18, 18]
+    events = [%Event{delta_time: 0} | tl(expected)
+              |> Enum.map(fn _ -> %Event{delta_time: 1} end)]
+    quantized = Event.quantize(events, 6)
+    assert expected == quantized |> Event.start_times
+  end
+
+  test "quantize 80" do
+    # {orig_delta, expected_delta}
+    vals = [{0, 0},
+            {1, 0},
+            {70, 80},
+            {100, 80},
+            {398, 400},
+            {405, 400},
+            {440, 480},
+            {441, 400}]
+    expected = vals |> Enum.map(fn({_, exp}) -> %Event{delta_time: exp} end)
+    events = vals |> Enum.map(fn({orig, _}) -> %Event{delta_time: orig} end)
+    quantized = Event.quantize(events, 80)
+    assert delta_times(expected) == delta_times(quantized)
+  end
+
+  # Return delta times
+  defp delta_times(events) do
+    events |> Enum.map(fn e -> e.delta_time end)
   end
 end

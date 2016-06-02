@@ -63,7 +63,6 @@ defmodule Midifile.Reader do
   @doc """
   Returns a Sequence  record.
   """
-
   def read(path) do
     {:ok, f} = File.open(path, [:read, :binary])
     pos = look_for_chunk(f, 0, "MThd", :file.pread(f, 0, 4))
