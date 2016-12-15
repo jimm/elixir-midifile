@@ -18,7 +18,9 @@ TODO
 
 ## Testing
 
-  % mix test
+```
+ % mix test
+```
 
 runs all of the tests in the test directory.
 
@@ -47,7 +49,7 @@ first tempo event's beats-per-minute value].
 
 A track contains an array of events.
 
-When you modify the `events` array, make sure to call recalc_times so each
+When you modify the `events` array, make sure to call `recalc_times` so each
 event gets its `time_from_start` recalculated. You don't have to do that
 after every event you add; just remember to do so before using the track in
 a way that expects the list of events to be ordered correctly.
@@ -65,9 +67,9 @@ stored in the sequence itself.
 
 ### Midifile.Measures
 
-The class Midifile.Sequence method get_measures returns a Midifile.Measures object.
-Midifile.Measures is a subclass of Array. It is a specialized container for
-Midifile.Measure objects, which can be use to map event times to measure numbers.
+The class Midifile.Sequence method get_measures returns a `Midifile.Measures` object.
+`Midifile.Measures` is a subclass of `Array`. It is a specialized container for
+`Midifile.Measure` objects, which can be use to map event times to measure numbers.
 Please note that this object has to be remade when events are deleted/added in
 the sequence.
 
@@ -79,12 +81,12 @@ to the Midifile.Event and Midifile.Track classes.
 
 Each event holds not only its delta time but also its time from the start of
 the track. The track is responsible for recalculating its events' start times.
-You can call Midifile.Track#recalc_times to do so.
+You can call `Midifile.Track#recalc_times` to do so.
 
 Subclasses of Midifile.Event implement the various MIDI messages such as note on
 and off, controller values, system exclusive data, and realtime bytes.
 
-Midifile.Realtime events have delta values and start times, just like all the
+`Midifile.Realtime` events have delta values and start times, just like all the
 other Midifile event types do. (MIDI real time status bytes don't have delta
 times, but this way we can record when in a track the realtime byte was
 received and should be sent. This is useful for start/continue/stop events
@@ -94,7 +96,7 @@ event is written out to a MIDI file, the delta time is not written.
 Midifile.MetaEvent events hold an array of bytes named 'data'. Many meta events
 are string holders (text, lyric, marker, etc.) Though the 'data' value is
 always an array of bytes, Midifile.MetaEvent helps with saving and accessing
-string. The Midifile.MetaEvent#data_as_str method returns the data bytes as a
+string. The `Midifile.MetaEvent#data_as_str` method returns the data bytes as a
 string. When assigning to a meta event's data, if you pass in a string it will
 get converted to an array of bytes.
 
@@ -108,7 +110,7 @@ examples directory, which are described below.
 
 ### Reading a MIDI File
 
-To read a MIDI file, create a Midifile.Sequence object and call its #read method,
+To read a MIDI file, create a `Midifile.Sequence` object and call its `#read` method,
 passing in an IO object.
 
 The #read method takes an optional block. If present, the block is called
@@ -117,6 +119,7 @@ track object, the total number of tracks and the number of the current track
 that has just been read. This is useful for notifying the user of progress,
 for example by updating a GUI progress bar.
 
+```elixir
  require 'Midifile/io/seqreader'
 
  # Create a new, empty sequence.
@@ -129,20 +132,21 @@ for example by updating a GUI progress bar.
          puts "read track #{i} of #{num_tracks}"
      }
  }
-
+```
 
 ### Writing a MIDI File
 
 To write a MIDI file, call the write method, passing in an IO object.
 
-
- require 'Midifile/io/seqwriter'
+```
+require 'Midifile/io/seqwriter'
 
  # Start with a sequence that has something worth saving.
  seq = read_or_create_seq_we_care_not_how()
 
  # Write the sequence to a MIDI file.
  File.open('my_output_file.mid', 'wb') { | file | seq.write(file) }
+```
 
 
 ### Editing a MIDI File
@@ -157,6 +161,7 @@ pressure) on channel 5 down one octave.
 
 #### Transposing One Channel
 
+```
  require 'Midifile/io/seqreader'
  require 'Midifile/io/seqwriter'
 
@@ -185,17 +190,19 @@ pressure) on channel 5 down one octave.
 
  # Write the sequence to a MIDI file.
  File.open('my_output_file.mid', 'wb') { | file | seq.write(file) }
-
+```
 
 ### Manipulating tracks
 
 If you modify a track's list of events directly, don't forget to call
 Midifile.Track#recalc_times when you are done.
 
+```
  track.events[42, 1] = array_of_events
  track.events << an_event
  track.merge(array_of_events)
  track.recalc_times
+```
 
 ### Calculating delta times
 
@@ -207,15 +214,15 @@ note, 1.0/32.0 is a 32nd note (use floating-point numbers to avoid integer
 rounding), 1.5 is a dotted quarter, etc. See the documentation for that method
 for more information.
 
-Midifile.Sequence#note_to_length takes a note name and returns a length value
+`Midifile.Sequence#note_to_length` takes a note name and returns a length value
 (again, as a multiple of a quarter note). Legal note names are those found in
-Midifile.Sequence::NOTE_TO_LENGTH, and may begin with "dotted" and/or end with
+`Midifile.Sequence::NOTE_TO_LENGTH`, and may begin with "dotted" and/or end with
 "triplet". For example, "whole", "sixteenth", "32nd", "quarter triplet",
 "dotted 16th", and "dotted 8th triplet" are all legal note names.
 
-Finally, Midifile.Sequence#note_to_delta takes a note name and returns a delta
-time. It does this by calling note_to_length, then passing the result to
-length_to_delta.
+Finally, `Midifile.Sequence#note_to_delta` takes a note name and returns a delta
+time. It does this by calling `note_to_length`, then passing the result to
+`length_to_delta`.
 
 
 ### Example Scripts
@@ -223,22 +230,22 @@ length_to_delta.
 Here are short descriptions of each of the examples found in the examples
 directory.
 
-* examples/from_scratch.rb shows you how to create a new sequence from scratch
+* [examples/from_scratch.rb](examples/from_scratch.rb) shows you how to create a new sequence from scratch
   and save it to a MIDI file. It creates a file called 'from_scratch.mid'.
 
-* examples/seq2text.rb dumps a MIDI file as text. It reads in a sequence and
-  uses the to_s method of each event.
+* [examples/seq2text.rb](examples/seq2text.rb) dumps a MIDI file as text. It reads in a sequence and
+  uses the `to_s` method of each event.
 
-* examples/reader2text.rb dumps a MIDI file as text. It subclasses
+* [examples/reader2text.rb](examples/reader2text.rb) dumps a MIDI file as text. It subclasses
   Midifile.SeqReader instead of creating a sequence containing tracks and events.
 
-* examples/transpose.rb transposes all note events (note on, note off, poly
+* [examples/transpose.rb](examples/transpose.rb) transposes all note events (note on, note off, poly
   pressure) on a specified channel by a specified amount.
 
-* There is also one MIDI file, examples/NoFences.mid. It is a little pop ditty
-  I wrote. The instruments in this file use General MIDI patch numbers and
-  drum note assignments. Since I don't normally use GM patches, the sounds
-  used here are at best approximations of the sounds I use.
+* There is also one MIDI file, [examples/NoFences.mid](examples/NoFences.mid). 
+  It is a little pop ditty I wrote. The instruments in this file use General MIDI 
+  patch numbers and drum note assignments. Since I don't normally use GM patches, 
+  the sounds used here are at best approximations of the sounds I use.
 
 
 ## Resources
